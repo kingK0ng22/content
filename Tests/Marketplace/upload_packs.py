@@ -690,7 +690,7 @@ def check_if_index_is_updated(index_folder_path: str, content_repo: Any, current
             logging.warning("Index is already updated.")
             logging.warning(skipping_build_task_message)
             sys.exit()
-
+        logging.info('diff in "check_if_index_is_updated"')
         for changed_file in current_commit.diff(index_commit):
             if changed_file.a_path.startswith(PACKS_FOLDER):
                 logging.info(
@@ -1062,14 +1062,16 @@ def main():
     content_repo = get_content_git_client(CONTENT_ROOT_PATH)
     current_commit_hash, previous_commit_hash = get_recent_commits_data(content_repo, index_folder_path,
                                                                         is_bucket_upload_flow, ci_branch)
+    logging.info(f'the content repo: {content_repo}.   the current_commit_hash: {current_commit_hash}.    the previous_commit_hash: {previous_commit_hash}')
 
     # detect packs to upload
     pack_names = get_packs_names(target_packs, previous_commit_hash)  # list of the pack's ids
     extract_packs_artifacts(packs_artifacts_path, extract_destination_path)
     packs_list = [Pack(pack_name, os.path.join(extract_destination_path, pack_name)) for pack_name in pack_names
                   if os.path.exists(os.path.join(extract_destination_path, pack_name))]
-    diff_files_list = content_repo.commit(current_commit_hash).diff(content_repo.commit(previous_commit_hash))
 
+    diff_files_list = content_repo.commit(current_commit_hash).diff(content_repo.commit(previous_commit_hash))
+    logging.info(f'the first diff {current_commit_hash}  ---  {content_repo.commit(previous_commit_hash)} files: {diff_files_list}')
     # taking care of private packs
     is_private_content_updated, private_packs, updated_private_packs_ids = handle_private_content(
         index_folder_path, private_bucket_name, extract_destination_path, storage_client, pack_names, storage_base_path
@@ -1114,6 +1116,7 @@ def main():
     # 1. we might need the info about this pack if a modified pack is dependent on it.
     # 2. even if the pack is not updated, we still keep some fields in it's metadata updated, such as download count,
     # changelog, etc.
+    logging.info(f'the list packs to upload{packs_for_current_marketplace_dict.keys()}')
     for pack in list(packs_for_current_marketplace_dict.values()):
         task_status = pack.collect_content_items()
         if not task_status:

@@ -1031,7 +1031,7 @@ class Pack(object):
             # set 2 commits by hash value in order to check the modified files of the diff
             current_commit = content_repo.commit(current_commit_hash)
             previous_commit = content_repo.commit(previous_commit_hash)
-
+            logging.info(f'diff in detect on pack: {self._pack_name}')
             for modified_file in current_commit.diff(previous_commit):
                 if modified_file.a_path.startswith(PACKS_FOLDER):
                     modified_file_path_parts = os.path.normpath(modified_file.a_path).split(os.sep)
