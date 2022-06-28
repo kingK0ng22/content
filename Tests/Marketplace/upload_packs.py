@@ -1139,13 +1139,15 @@ def main():
 
         if not task_status:
             pack.status = PackStatus.CHANGES_ARE_NOT_RELEVANT_FOR_MARKETPLACE.name
-            continue
 
         task_status, is_missing_dependencies = pack.format_metadata(index_folder_path,
                                                                     packs_dependencies_mapping, build_number,
                                                                     current_commit_hash,
                                                                     statistics_handler,
                                                                     packs_for_current_marketplace_dict, marketplace)
+
+        if pack.status == PackStatus.CHANGES_ARE_NOT_RELEVANT_FOR_MARKETPLACE.name:
+            continue
 
         if is_missing_dependencies:
             # If the pack is dependent on a new pack, therefore it is not yet in the index.zip as it might not have
