@@ -1139,15 +1139,13 @@ def main():
 
         if not task_status:
             pack.status = PackStatus.CHANGES_ARE_NOT_RELEVANT_FOR_MARKETPLACE.name
+            pack.latest_version = pack.get_changelog_latest_rn_version(index_folder_path)
 
         task_status, is_missing_dependencies = pack.format_metadata(index_folder_path,
                                                                     packs_dependencies_mapping, build_number,
                                                                     current_commit_hash,
                                                                     statistics_handler,
                                                                     packs_for_current_marketplace_dict, marketplace)
-
-        if pack.status == PackStatus.CHANGES_ARE_NOT_RELEVANT_FOR_MARKETPLACE.name:
-            continue
 
         if is_missing_dependencies:
             # If the pack is dependent on a new pack, therefore it is not yet in the index.zip as it might not have
@@ -1171,7 +1169,6 @@ def main():
 
         if not_updated_build:
             pack.status = PackStatus.PACK_IS_NOT_UPDATED_IN_RUNNING_BUILD.name
-            continue
 
         sign_and_zip_pack(pack, signature_key, remove_test_playbooks)
 

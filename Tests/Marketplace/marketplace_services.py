@@ -1490,6 +1490,18 @@ class Pack(object):
                 modified_rn_files.append(modified_file_path_parts[-1])
         return modified_rn_files
 
+    def get_changelog_latest_rn_version(self, index_folder_path):
+        # load changelog from downloaded index
+        logging.info(f"Loading changelog for {self._pack_name} pack")
+        changelog_index_path = os.path.join(index_folder_path, self._pack_name, Pack.CHANGELOG_JSON)
+
+        if os.path.exists(changelog_index_path):
+            changelog, changelog_latest_rn_version, changelog_latest_rn = \
+                self.get_changelog_latest_rn(changelog_index_path)
+            logging.info(f"the last version for marketplace is {changelog_latest_rn_version}")
+
+        return changelog_latest_rn_version
+
     def prepare_release_notes(self, index_folder_path, build_number, modified_rn_files_paths=None,
                               modified_files_data=None, marketplace='xsoar'):
         """
