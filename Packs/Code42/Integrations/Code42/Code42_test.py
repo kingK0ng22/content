@@ -1,5 +1,6 @@
 import json
 import pytest
+import io
 from py42.sdk.queries.fileevents.filters import FileCategory
 from requests import Response
 from py42.sdk import SDKClient
@@ -12,7 +13,6 @@ from Code42 import (
     get_file_category_value,
     build_query_payload,
     map_to_code42_event_context,
-    map_to_code42_alert_context,
     map_to_file_context,
     alert_get_command,
     alert_resolve_command,
@@ -35,7 +35,6 @@ from Code42 import (
     list_watchlists_command,
     list_watchlists_included_users,
     add_user_to_watchlist_command,
-    remove_user_from_watchlist_command,
     download_file_command,
     fetch_incidents,
     highriskemployee_get_command,
@@ -438,6 +437,7 @@ MOCK_ALERTS_RESPONSE = """{
   "problems": []
 }"""
 
+
 MOCK_ALERT_AGGREGATE_RESPONSE = r"""
 {
     "type$": "ALERT_DETAILS_IN_AGGREGATE_V2_RESPONSE",
@@ -561,7 +561,7 @@ MOCK_ALERT_AGGREGATE_RESPONSE = r"""
         "alertUrl": "https://console.us.code42.com/app/#/alerts/review-alerts?t0=alertId&q0=IS&v0=4cbda753-8821-4898-94b8-b51aff393e23"
     }
 }
-"""
+"""  # noqa: E501
 MOCK_ALERT_DETAILS_RESPONSE = """{
   "type$": "ALERT_DETAILS_RESPONSE",
   "alerts": [
@@ -1463,6 +1463,12 @@ MOCK_GET_ALL_MATTER_CUSTODIANS_RESPONSE = """
 }
 """
 
+
+def util_load_json(path: str):
+    with io.open(path, mode='r', encoding='utf-8') as f:
+        return json.loads(f.read())
+
+
 _TEST_USER_ID = "123412341234123412"  # value found in GET_USER_RESPONSE
 _TEST_USERNAME = "user1@example.com"
 _TEST_ORG_NAME = "TestCortexOrg"
@@ -1564,7 +1570,6 @@ def code42_watchlists_included_users_mock(code42_sdk_mock, mocker):
         included_users_response
     )
     return code42_sdk_mock
-
 
 
 @pytest.fixture
@@ -2282,7 +2287,7 @@ def test_list_watchlists_command(code42_watchlists_mock):
         assert actual_response[i]["IncludedUsersCount"] == expected_response[i]["stats"].get("includedUsersCount", 0)
 
 
-def test_list_watchlists_included_users_calls_by_id_when_watchlist_type_arg_provided_looks_up_watchlist_id(code42_watchlists_included_users_mock):
+def test_list_watchlists_included_users_calls_by_id_when_watchlist_type_arg_provided_looks_up_watchlist_id(code42_watchlists_included_users_mock):  # noqa: E501
     watchlist_id = "b55978d5-2d50-494d-bec9-678867f3830c"
     code42_watchlists_included_users_mock.watchlists._watchlists_service.watchlist_type_id_map.get.return_value = watchlist_id
     client = create_client(code42_watchlists_included_users_mock)
@@ -2301,18 +2306,22 @@ def test_list_watchlists_included_users_calls_by_id_when_watchlist_type_arg_prov
 def test_add_user_to_watchlist_command_with_UUID_calls_add_by_id_method(code42_sdk_mock, mocker):
     watchlist_id = "b55978d5-2d50-494d-bec9-678867f3830c"
     user_id = "1234"
-    code42_sdk_mock.users.get_by_username.return_value = create_mock_code42_sdk_response(mocker, f'{{"users": [{{"userUid": "{user_id}"}}]}}')
+    response_text = f'{{"users": [{{"userUid": "{user_id}"}}]}}'
+    code42_sdk_mock.users.get_by_username.return_value = create_mock_code42_sdk_response(mocker, response_text)
     code42_sdk_mock.watchlists.add_included_users_by_watchlist_id.return_value = create_mock_code42_sdk_response(mocker, "")
     client = create_client(code42_sdk_mock)
     cmd_res = add_user_to_watchlist_command(client, {"watchlist": watchlist_id, "username": "user_a@example.com"})
     assert code42_sdk_mock.watchlists.add_included_users_by_watchlist_id.called_once_with(user_id, watchlist_id)
-    assert cmd_res.raw_response == {'Watchlist': 'b55978d5-2d50-494d-bec9-678867f3830c', 'Username': 'user_a@example.com', 'Success': True}
+    assert cmd_res.raw_response == {
+        'Watchlist': 'b55978d5-2d50-494d-bec9-678867f3830c', 'Username': 'user_a@example.com', 'Success': True
+    }
 
 
 def test_add_user_to_watchlist_command_with_watchlist_type_calls_add_by_type_method(code42_sdk_mock, mocker):
     watchlist_type = "DEPARTING_EMPLOYEE"
     user_id = "1234"
-    code42_sdk_mock.users.get_by_username.return_value = create_mock_code42_sdk_response(mocker, f'{{"users": [{{"userUid": "{user_id}"}}]}}')
+    response_text = f'{{"users": [{{"userUid": "{user_id}"}}]}}'
+    code42_sdk_mock.users.get_by_username.return_value = create_mock_code42_sdk_response(mocker, response_text)
     code42_sdk_mock.watchlists.add_included_users_by_watchlist_type.return_value = create_mock_code42_sdk_response(mocker, "")
     client = create_client(code42_sdk_mock)
     cmd_res = add_user_to_watchlist_command(client, {"watchlist": watchlist_type, "username": "user_a@example.com"})
